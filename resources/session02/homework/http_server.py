@@ -1,14 +1,17 @@
 import socket
 import sys
-
+from os.path import join, isfile, isdir
+from os import listdir, getcwd
+import os
+import mimetypes 
 
 def response_ok(body=b"this is a pretty minimal response", mimetype=b"text/plain"):
     """returns a basic HTTP response"""
     resp = []
     resp.append(b"HTTP/1.1 200 OK")
-    resp.append(b"Content-Type: text/plain")
+    resp.append(b"Content-Type: " + mimetype)
     resp.append(b"")
-    resp.append(b"this is a pretty minimal response")
+    resp.append(body)
     return b"\r\n".join(resp)
 
 
@@ -22,7 +25,10 @@ def response_method_not_allowed():
 
 def response_not_found():
     """returns a 404 Not Found response"""
-    return b""
+    resp = []
+    resp.append("HTTP/1.1 404 Not Found")
+    resp.append("")
+    return "\r\n".join(resp).encode('utf8')
 
 
 def parse_request(request):
@@ -33,9 +39,24 @@ def parse_request(request):
     return uri
 
 
+def handle_directory(uri):
+    return ("\n".join(listdir(uri)).encode("utf8"), "text/plain".encode("utf8"))
+
+def handle_file(uri):
+    with open (uri, "rb") as file:
+        contents = file.read()
+        mime_type, _ =  mimetypes.guess_type(uri)
+        return contents, mime_type.encode('utf8')
+
+
 def resolve_uri(uri):
-    """This method should return appropriate content and a mime type"""
-    return b"still broken", b"text/plain"
+    cwd = getcwd() 
+    absolute_path =  os.path.join(cwd, "webroot") + uri 
+    if isdir(absolute_path):
+        return handle_directory(absolute_path)
+    if isfile(absolute_path):
+        return handle_file(absolute_path)
+    raise NameError
 
 
 def server(log_buffer=sys.stderr):
@@ -66,11 +87,11 @@ def server(log_buffer=sys.stderr):
                 else:
                     try:
                         content, mime_type = resolve_uri(uri)
+                        response = response_ok(content, mime_type)
                     except NameError:
                         response = response_not_found()
                     else:
                         response = response_ok(content, mime_type)
-
                 print('sending response', file=log_buffer)
                 conn.sendall(response)
             finally:
