@@ -54,9 +54,9 @@ def restaurant_data_generator(html):
 
 if __name__ == '__main__':
     use_params = {
-        'Inspection_Start': '2/1/2013',
-        'Inspection_End': '2/1/2015',
-        'Zip_Code': '98101'
+        'Inspection_Start': '1/1/2014',
+        'Inspection_End': '1/1/2016',
+        'Zip_Code': '98118'
     }
     # html = get_inspection_page(**use_params)
     html = load_inspection_page('inspection_page.html')

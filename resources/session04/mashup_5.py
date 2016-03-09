@@ -40,7 +40,7 @@ def get_inspection_page(**kwargs):
 
 
 def parse_source(html):
-    parsed = BeautifulSoup(html)
+    parsed = BeautifulSoup(html, 'html5lib')
     return parsed
 
 
@@ -128,12 +128,19 @@ def result_generator(count):
     parsed = parse_source(html)
     content_col = parsed.find("td", id="contentcol")
     data_list = restaurant_data_generator(content_col)
+    restaurant_list = []
+
     for data_div in data_list[:count]:
         metadata = extract_restaurant_metadata(data_div)
         inspection_data = get_score_data(data_div)
         metadata.update(inspection_data)
-        yield metadata
-
+        restaurant_list.append(metadata)
+    if sort_by:
+        restaurant_list = sorted(restaurant_list,
+                                    key=operator.itemgetter(y), 
+                                    reverse = high_to_low)
+        for restaurant in restaurant_list[:count]:
+            yield restaurant
 
 def get_geojson(result):
     address = " ".join(result.get('Address', ''))
@@ -157,7 +164,7 @@ def get_geojson(result):
 
 if __name__ == '__main__':
     total_result = {'type': 'FeatureCollection', 'features': []}
-    for result in result_generator(10):
+    for result in result_generator(50):
         geojson = get_geojson(result)
         total_result['features'].append(geojson)
     with open('my_map.json', 'w') as fh:

@@ -38,7 +38,7 @@ def get_inspection_page(**kwargs):
 
 
 def parse_source(html):
-    parsed = BeautifulSoup(html)
+    parsed = BeautifulSoup(html, 'html5lib')
     return parsed
 
 
